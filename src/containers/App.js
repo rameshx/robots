@@ -3,33 +3,38 @@ import CardList from '../components/CardList';
 import SearchBox from '../components/SearchBox';
 import './App.css';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { connect } from 'react-redux';
+import { setSearchField, retrieveRobots } from '../actions';
 
+const mapStateToProps = (state) => {
+    return  { 
+        searchField: state.searchRobots.searchField,
+        robots: state.retrieveRobots.robots,
+        error: state.retrieveRobots.error,
+        isPending: state.retrieveRobots.isPending,
+    };
+}
+const mapDispatchToProps = (dispatch) => {
+    return {
+        onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+        onRetrieveRobots: () => dispatch(retrieveRobots())
+    };
+}
 class App extends React.Component {
-    constructor() {
-        super();
-        this.state = {
-            robots: [],
-            searchString: ''
-        }
-    }
-    onSearchChange = (event) => {
-        this.setState({ searchString: event.target.value });
-    }
+    
     componentDidMount() {
-        fetch('https://jsonplaceholder.typicode.com/users').then(response => response.json())
-        .then(
-            users => this.setState({ robots: users })
-        )
+        this.props.onRetrieveRobots();
     }
     render() {
-        const { robots, searchString } = this.state;
+        const { robots, isPending } = this.props;
+        const { searchField, onSearchChange } = this.props;
         const filteredRobots = robots.filter((robot) => {
-            return robot.name.toLowerCase().includes(searchString.toLowerCase());
+            return robot.name.toLowerCase().includes(searchField.toLowerCase());
         });
-        return robots.length ? (
+        return !isPending ? (
             <div className="tc">
             <h1 className="f1">Robots</h1>
-            <SearchBox searchChange={this.onSearchChange}/>
+            <SearchBox searchChange={onSearchChange}/>
             <ErrorBoundary>
                 <CardList robots={filteredRobots}/>
             </ErrorBoundary>
@@ -38,4 +43,4 @@ class App extends React.Component {
     }
 
 }
-export default App;
+export default connect(mapStateToProps, mapDispatchToProps)(App);
